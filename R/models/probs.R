@@ -39,7 +39,7 @@ estimar_probs <- function(pob) {
   
   res <- list(
     t = cox_fit$time, # tiempos de eventos
-    cese = p_cese, # probabilidades acumuladas de salida por cese (antes del tiempo t)
+    cese = p_cese, # probabilidades de riesgos en competencia acumuladas de salida por cese (antes del tiempo t)
     activo = p_activo # probabilidades puntuales (al tiempo t) de seguir activo
   )
   
@@ -51,7 +51,7 @@ tiempos <- function(probs, estado) {
   tt <- cbind(probs[["t"]], probs[[estado]]) |>
     as_tibble() |>
     rename(t=1) |>
-    distinct(`F`, M, .keep_all = T)
+    distinct(f, m, .keep_all = T)
   
   return(tt)
 }
@@ -59,8 +59,8 @@ tiempos <- function(probs, estado) {
 probs_udd <- function(tiempos, umbral) {
   
   tt <- 0:umbral
-  probs_F <- with(tiempos, approx(t, `F`, xout=tt))$y
-  probs_M <- with(tiempos, approx(t, M, xout=tt))$y
+  probs_F <- with(tiempos, approx(t, f, xout=tt))$y
+  probs_M <- with(tiempos, approx(t, m, xout=tt))$y
   
   return(
     tibble(t=tt, f=probs_F, m=probs_M)
