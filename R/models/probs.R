@@ -3,21 +3,47 @@ library(survival)
 library(survminer)
 library(readxl)
 
-poblacion <- read_excel("data/processed/poblacion.xlsx")
+poblacion <- read_rds("data/processed/poblacion.RDS")
 
-estimarProbs <- function(pob) {
-  surv <- with(pob, Surv(antiguedad_final, cod_evento))
-  cox_mod <- coxph(surv ~ sexo, data = pob, id = cedula)
-  nivs <- unique(pob$sexo)
-  cox_fit <- survfit(cox_mod,
-    newdata = tibble(sexo=nivs)
+estimar_probs <- function(pob) {
+
+  # estimador de aalen-johansen para la poblacion
+  aj_poblacion <- Surv(
+    pob$antiguedad_final,
+    pob$cod_evento
   )
-  p <- with(cox_fit, pstate)
-  p_activo <- as_tibble(p[,,1])
-  p_cese <- as_tibble(p[,,2])
-  colnames(p_activo) <- nivs
-  colnames(p_cese) <- nivs
-  return(with(cox_fit, list(t=time, cese=p_cese, activo=p_activo)))
+  
+  # modelo de cox de multiples estados
+  cox_mod <- coxph(
+    aj_poblacion ~ sexo,
+    data = pob, 
+    id = cedula
+  )
+  
+  # estimacion de probabilidades a partir de los datos
+  sexo <- c("F", "M")
+  cox_fit <- survfit(
+    cox_mod,
+    newdata = tibble(sexo=sexo)
+  )
+  
+  p <- cox_fit$pstate # probabilidades de salida por causa y sexo
+  
+  p_activo <- p[,,1]
+  colnames(p_activo) <- tolower(sexo)
+  p_activo <- as_tibble(p_activo)
+  
+  p_cese <- p[,,2]
+  colnames(p_cese) <- tolower(sexo)
+  p_cese <- as_tibble(p_cese)
+  
+  res <- list(
+    t = cox_fit$time, # tiempos de eventos
+    cese = p_cese, # probabilidades acumuladas de salida por cese (antes del tiempo t)
+    activo = p_activo # probabilidades puntuales (al tiempo t) de seguir activo
+  )
+  
+  return(res)
 }
 
 tiempos <- function(probs, estado) {
@@ -43,7 +69,7 @@ probs_udd <- function(tiempos, umbral) {
 }
 
 fit_probs <- poblacion |>
-  estimarProbs()
+  estimar_probs()
 
 p_cese <- fit_probs |>
   tiempos(estado="cese") |>
