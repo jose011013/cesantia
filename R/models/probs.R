@@ -86,8 +86,10 @@ probs <- p_cese |>
   mutate(qf_diff = c(NA, diff(qf)),
          qm_diff = c(NA, diff(qm)))
 
-probs |>
+g_probs <- probs |>
   pivot_longer(-1, names_to = "curva", values_to = "prob") |>
   ggplot(aes(t, prob, color = curva)) +
   geom_line() +
   theme_bw()
+
+plotly::ggplotly(g_probs)
