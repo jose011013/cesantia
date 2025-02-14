@@ -1,0 +1,64 @@
+---
+title: "EDA"
+author: "José Andrés Piedra"
+date: "2024-11-21"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Carga de paquetes y opciones
+
+```{r}
+source("libs.R")
+```
+
+## Visualización
+
+```{r warning=FALSE}
+funcionarios <- read_xls("datos/funcionarios ultima quincena.xls")
+
+funcionarios |>
+  ggplot(aes(as_factor(ANTIGUEDAD), MOVSALARIO, fill = `ESQUEMA SALARIAL`)) +
+  geom_boxplot() +
+  geom_point() +
+  scale_y_log10()
+
+```
+
+## Modelo de riesgos proporcionales de Cox
+
+```{r}
+surv_antiguedad <- with(poblacion, Surv(antiguedad_final, cod_evento))
+
+aj_antiguedad <- survfit(surv_antiguedad~1, data = poblacion)
+
+aj_probs <- with(aj_antiguedad, cbind(time, pstate))
+
+aj_probs_cese_spline <- with(aj_probs_cese, spline(time,`1`, xout = 1:436, method = "hyman"))
+
+aj_antiguedad
+
+aj_antiguedad$transitions
+
+aj_antiguedad %>%
+  ggcompetingrisks()
+
+survfit(surv_antiguedad~tipo_de_movimiento,
+        data = poblacion) %>%
+  ggcompetingrisks()
+
+survfit(surv_antiguedad~esquema_salarial,
+        data = poblacion) %>%
+  ggcompetingrisks()
+
+cox_antiguedad <- coxph(surv_antiguedad~sexo, data=poblacion, id=cedula)
+cox.zph(cox_antiguedad)
+
+cox_fit <- survfit(cox_antiguedad, newdata = poblacion %>% filter(tipo_de_movimiento=="ACTIVO"))
+
+cox_probs <- cox_fit$pstate[,,2]
+
+```
