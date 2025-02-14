@@ -1,4 +1,9 @@
-source("preparation.R")
+library(tidyverse)
+library(survival)
+library(survminer)
+library(readxl)
+
+poblacion <- read_excel("data/processed/poblacion.xlsx")
 
 estimarProbs <- function(pob) {
   surv <- with(pob, Surv(antiguedad_final, cod_evento))

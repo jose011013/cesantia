@@ -168,3 +168,4 @@ funcionarios <- preparar_funcionarios(path_funcionarios)
 poblacion <- preparar_poblacion(path_salidas, path_funcionarios, fecha_corte)
 
 write.xlsx(poblacion, "data/processed/poblacion.xlsx", row.names = FALSE)
+write_rds(poblacion, "data/processed/poblacion.RDS")
