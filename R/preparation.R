@@ -1,6 +1,7 @@
 library(tidyverse)
 library(readxl)
 library(janitor)
+library(openxlsx)
 
 preparar_salidas <- function(path) {
   
@@ -104,7 +105,7 @@ tiempo_sobrevivencia_meses <- function(inicio, final, fecha_corte) {
   return(interval(inicio, fin) %/% months(1))
 }
 
-prepararPoblacion <- function(path_salidas, path_funcionarios, fecha_corte) {
+preparar_poblacion <- function(path_salidas, path_funcionarios, fecha_corte) {
   
   salidas <- preparar_salidas(path_salidas) # salidas de la cgr
   funcionarios <- preparar_funcionarios(path_funcionarios) # activos
@@ -164,4 +165,6 @@ fecha_corte <- "2024/12/31"
 salidas <- preparar_salidas(path_salidas)
 funcionarios <- preparar_funcionarios(path_funcionarios)
 
-poblacion <- prepararPoblacion(path_salidas, path_funcionarios, fecha_corte)
+poblacion <- preparar_poblacion(path_salidas, path_funcionarios, fecha_corte)
+
+write.xlsx(poblacion, "data/processed/poblacion.xlsx", row.names = FALSE)
