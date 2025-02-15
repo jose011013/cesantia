@@ -7,8 +7,8 @@ poblacion <- read_rds("data/processed/poblacion.RDS")
 
 estimar_probs <- function(pob) {
 
-  # estimador de aalen-johansen para la poblacion
-  aj_poblacion <- Surv(
+  # estimador de aalen-johansen para las salidas
+  aj_salidas <- Surv(
     pob$antiguedad_final,
     pob$cod_evento
   )
@@ -20,8 +20,8 @@ estimar_probs <- function(pob) {
     id = cedula
   )
   
-  # estimacion de probabilidades a partir de los datos
-  sexo <- c("F", "M")
+  # estimacion de probabilidades por sexo
+  sexo <- c("f", "m")
   cox_fit <- survfit(
     cox_mod,
     newdata = tibble(sexo=sexo)
@@ -30,11 +30,11 @@ estimar_probs <- function(pob) {
   p <- cox_fit$pstate # probabilidades de salida por causa y sexo
   
   p_activo <- p[,,1]
-  colnames(p_activo) <- tolower(sexo)
+  colnames(p_activo) <- sexo
   p_activo <- as_tibble(p_activo)
   
   p_cese <- p[,,2]
-  colnames(p_cese) <- tolower(sexo)
+  colnames(p_cese) <- sexo
   p_cese <- as_tibble(p_cese)
   
   res <- list(
@@ -46,7 +46,7 @@ estimar_probs <- function(pob) {
   return(res)
 }
 
-tiempos <- function(probs, estado) {
+tiempos_evento <- function(probs, estado) {
   
   tt <- cbind(probs[["t"]], probs[[estado]]) |>
     as_tibble() |>
@@ -56,16 +56,13 @@ tiempos <- function(probs, estado) {
   return(tt)
 }
 
-probs_udd <- function(tiempos, umbral) {
+probs_udd <- function(t_evento, umbral) {
   
   tt <- 0:umbral
-  probs_F <- with(tiempos, approx(t, f, xout=tt))$y
-  probs_M <- with(tiempos, approx(t, m, xout=tt))$y
+  probs_f <- approx(t_evento$t, t_evento$f, xout=tt)$y
+  probs_m <- approx(t_evento$t, t_evento$m, xout=tt)$y
   
-  return(
-    tibble(t=tt, f=probs_F, m=probs_M)
-  )
-
+  return(tibble(t=tt, f=probs_f, m=probs_m))
 }
 
 fit_probs <- poblacion |>
