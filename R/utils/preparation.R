@@ -3,6 +3,10 @@ library(readxl)
 library(janitor)
 library(openxlsx)
 
+#' Preparar datos de salidas
+#'
+#' @param path La ruta al archivo Excel que contiene los datos de salidas
+#' @return Un tibble con los datos de salidas preparados
 preparar_salidas <- function(path) {
   
   col_types <- list(
@@ -50,6 +54,10 @@ preparar_salidas <- function(path) {
   return(salidas)
 }
 
+#' Preparar datos de funcionarios
+#'
+#' @param path La ruta al archivo Excel que contiene los datos de funcionarios
+#' @return Un tibble con los datos de funcionarios preparados
 preparar_funcionarios <- function(path) {
   
   col_types <- list(
@@ -95,6 +103,12 @@ preparar_funcionarios <- function(path) {
   return(funcionarios)
 }
 
+#' Calcular el tiempo de supervivencia en meses
+#'
+#' @param inicio La fecha de inicio
+#' @param final La fecha final
+#' @param fecha_corte La fecha de corte
+#' @return El tiempo de supervivencia en meses
 tiempo_sobrevivencia_meses <- function(inicio, final, fecha_corte) {
   fin <- if_else(
     is.na(final),
@@ -106,6 +120,12 @@ tiempo_sobrevivencia_meses <- function(inicio, final, fecha_corte) {
   return(interval(inicio, fin) %/% months(1))
 }
 
+#' Preparar datos de la población
+#'
+#' @param path_salidas La ruta al archivo Excel que contiene los datos de salidas
+#' @param path_funcionarios La ruta al archivo Excel que contiene los datos de funcionarios
+#' @param fecha_corte La fecha de corte
+#' @return Un tibble con los datos de la población preparados
 preparar_poblacion <- function(path_salidas, path_funcionarios, fecha_corte) {
   
   salidas <- preparar_salidas(path_salidas) # salidas de la cgr
@@ -157,11 +177,13 @@ preparar_poblacion <- function(path_salidas, path_funcionarios, fecha_corte) {
   return(poblacion)
 }
 
+# Ejecución principal
 path_salidas <- "data/raw/salidas.xls"
 path_funcionarios <- "data/raw/funcionarios_uq.xls"
 fecha_corte <- "2024/12/31"
 
 poblacion <- preparar_poblacion(path_salidas, path_funcionarios, fecha_corte)
 
+# Guardar los resultados en archivos
 write.xlsx(poblacion, "data/processed/poblacion.xlsx", rowNames = FALSE)
 write_rds(poblacion, "data/processed/poblacion.RDS")
