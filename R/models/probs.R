@@ -4,6 +4,7 @@ library(survminer)
 library(readxl)
 
 poblacion <- read_rds("data/processed/poblacion.RDS")
+umbral <- 420 # 35 años, el maximo
 
 .estimar_probs <- function(pob) {
   aj_salidas <- Surv(pob$antiguedad_final, pob$cod_evento)
@@ -26,6 +27,7 @@ poblacion <- read_rds("data/processed/poblacion.RDS")
   )
 }
 
+# probabilidades de estado del modelo de cox
 probs <- function(pob) {
   model <- .estimar_probs(pob)
   res <- lapply(1:5, \(i) .extraer_probs(model, i))
@@ -48,21 +50,25 @@ probs_acumuladas_udd <- function(probs, estado, umbral) {
   return(tibble(t=tt, f=probs_f, m=probs_m))
 }
 
-umbral <- 420
 model_probs <- probs(poblacion)
 
-pmf_cese <- probs_acumuladas_udd(model_probs, "cese", umbral) |>
+probs_acumuladas_cese <- probs_acumuladas_udd(model_probs, "cese", umbral) |>
   rename(qf=f, qm=m)
 
-pmf_activo <- probs_acumuladas_udd(model_probs, "activo", umbral) |>
+probs_acumuladas_activo <- probs_acumuladas_udd(model_probs, "activo", umbral) |>
   rename(pf=f, pm=m)
 
-probs <- p_cese |>
-  left_join(p_activo) |>
-  mutate(qf_diff = c(NA, diff(qf)),
-         qm_diff = c(NA, diff(qm)))
+probs_finales <- probs_acumuladas_cese |>
+  inner_join(probs_acumuladas_activo, join_by(t)) |>
+  mutate(
+    qf_diff = c(0, diff(qf)),
+    qm_diff = c(0, diff(qm))
+  )
 
-g_probs <- probs |>
+write.xlsx(probs_finales, "data/processed/probs_activo_cese.xlsx")
+write_rds(probs_finales, "data/processed/probs_activo_cese.RDS")
+
+g_probs <- probs_finales |>
   pivot_longer(-1, names_to = "curva", values_to = "prob") |>
   ggplot(aes(t, prob, color = curva)) +
   geom_line() +
