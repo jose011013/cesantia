@@ -17,8 +17,8 @@ poblacion <- read_rds("data/processed/poblacion.RDS")
 }
 
 # i = 1: activo, i = 2: cese, i = 3: despido, i = 4: pension, i = 5: renuncia
-.extraer_probs <- function(model, estado) {
-  p <- model$pstate[,,estado]
+.extraer_probs <- function(model, i_estado) {
+  p <- model$pstate[,,i_estado]
   colnames(p) <- c("f", "m")
   return(
     as_tibble(p) |>
@@ -34,29 +34,27 @@ probs <- function(pob) {
   return(res)
 }
 
-.identificar_tiempos_evento <- function(probs, estado) {
+.filtrar_tiempos_evento <- function(probs, estado) {
   tt <- distinct(probs[[estado]], f, m, .keep_all = T)
   return(tt)
 }
 
-probs_udd <- function(probs, estado, umbral) {
-  p <- .identificar_tiempos_evento(probs, estado)
+probs_acumuladas_udd <- function(probs, estado, umbral) {
+  p <- .filtrar_tiempos_evento(probs, estado)
   tt <- 0:umbral
-  probs_f <- approx(t_evento$t, t_evento$f, xout=tt)$y
-  probs_m <- approx(t_evento$t, t_evento$m, xout=tt)$y
+  # interpolacion lineal a la CDF === udd
+  probs_f <- approx(p$t, p$f, xout=tt)$y
+  probs_m <- approx(p$t, p$m, xout=tt)$y 
   return(tibble(t=tt, f=probs_f, m=probs_m))
 }
 
-fit_probs <- probs(poblacion)
+umbral <- 420
+model_probs <- probs(poblacion)
 
-p_cese <- fit_probs |>
-  tiempos_evento(estado="cese") |>
-  probs_udd(umbral=420) |>
+pmf_cese <- probs_acumuladas_udd(model_probs, "cese", umbral) |>
   rename(qf=f, qm=m)
 
-p_activo <- fit_probs |>
-  tiempos_evento(estado="activo") |>
-  probs_udd(umbral=420) |>
+pmf_activo <- probs_acumuladas_udd(model_probs, "activo", umbral) |>
   rename(pf=f, pm=m)
 
 probs <- p_cese |>
