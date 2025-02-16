@@ -9,6 +9,7 @@ poblacion_activa <- poblacion |>
 #' @param poblacion_activa Un tibble con los datos de la población activa
 #' @return Un tibble con los promedios salariales por antigüedad
 .mediana_salarial <- function(poblacion_activa) {
+  stopifnot(all(poblacion_activa$cod_evento=="0"))
   promedio_salarial <- poblacion_activa |>
     group_by(antiguedad_final) |>
     reframe(salario = median(salario))
@@ -20,7 +21,7 @@ poblacion_activa <- poblacion |>
 #' @param poblacion_activa Un tibble con los datos de la población activa
 #' @param salario_base El salario base inicial
 #' @return Una lista con el salario base y el modelo lineal ajustado
-.estimar_escala <- function(poblacion_activa, salario_base = 535650) {
+.estimar_escala <- function(poblacion_activa, salario_base) {
   mediana_salarial <- .mediana_salarial(poblacion_activa)
   return(list(
     salario_base = salario_base,
@@ -42,10 +43,10 @@ factor_crecimiento_salarial <- function(modelo_escala, antiguedad_i, antiguedad_
   ))
   sal_f <- salario_base + unname(predict(
     modelo_escala$lm,
-    newdata = tibble(antiguedad_final = antiguedad_f)
+    newdata = tibble(antiguedad_final = (antiguedad_i+1):antiguedad_f)
   ))
   return(sal_f / sal_i)
 }
 
 # Ejecución principal
-escala <- .estimar_escala(poblacion_activa)
+modelo_escala <- .estimar_escala(poblacion_activa, salario_base=535650)

@@ -102,6 +102,23 @@ pmf_udd <- function(model_probs, umbral) {
   return(tabla_probs)
 }
 
+# retorna P(ser cesado en el mes t | antiguedad, sexo)
+prob_cese_surv <- function(probs, umbral, antiguedad_i, antiguedad_f, sexo) {
+
+  stopifnot(sexo %in% c("f", "m"))
+  stopifnot(antiguedad_i <= antiguedad_f)
+  
+  p <- probs |>
+    filter(antiguedad_i<=t, t<=min(antiguedad_f, umbral))
+  
+  cese <- paste0("q",sexo,"_diff")
+  activo <- paste0("p",sexo)
+  
+  probs_cese_sobrevivientes <- p[[cese]]/(p[[cese]][1] + p[[activo]][1])
+
+  return(.expand_vector(probs_cese_sobrevivientes,umbral))
+}
+
 # Ejecución principal
 model_probs <- probs_cox(poblacion)
 tabla_probs <- pmf_udd(model_probs, umbral)
