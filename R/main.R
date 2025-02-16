@@ -56,8 +56,8 @@ calcular_cesantia <- function(poblacion_activa, probs, umbral) {
 
 valor_actuarial <- calcular_cesantia(poblacion=poblacion_activa, probs=tabla_probs, umbral=420)
 
-resultado <- activos |>
+resultado <- poblacion_activa |>
   mutate(valor_actuarial = rowSums(valor_actuarial))
 
-openxlsx::write.xlsx(resultado, "datos/output/resultado.xlsx")
+openxlsx::write.xlsx(resultado, "results/resultado.xlsx")
 
