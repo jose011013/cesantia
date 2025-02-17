@@ -1,6 +1,6 @@
-# Proyecto de Cálculo de Cesantía
+# Valuación actuarial del beneficio de cesantía
 
-Este proyecto tiene como objetivo calcular el valor actuarial de la cesantía para una población activa utilizando modelos de supervivencia y factores de descuento. El proyecto está estructurado en varios archivos R que contienen funciones modulares para realizar diferentes tareas.
+Este proyecto tiene como objetivo calcular el valor actuarial de la cesantía para una población activa utilizando modelos demográficos y financieros de la población activa.
 
 ## Estructura del Proyecto
 
