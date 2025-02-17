@@ -52,14 +52,14 @@ El archivo `salidas.xls` debe contener las siguientes columnas:
 
 - `CEDULA`: Texto, cédula del empleado
 - `NOMBRE`: Texto, nombre del empleado
-- `TIPO DE MOVIMIENTO`: Texto, tipo de movimiento (por ejemplo, "CESE")
+- `TIPO DE MOVIMIENTO`: Texto, tipo de movimiento (por ejemplo, RENUNCIA)
 - `RIGE`: Fecha, fecha en que rige el movimiento
 - `FECHA DE INGRESO`: Fecha, fecha de ingreso del empleado
 - `FECHA DE NACIMIENTO`: Fecha, fecha de nacimiento del empleado
-- `SEXO`: Texto, sexo del empleado (por ejemplo, "F" o "M")
-- `ENTIDAD`: Texto, entidad a la que pertenece el empleado
-- `CATEGORIA`: Texto, categoría del empleado
-- `ESQUEMA SALARIAL`: Texto, esquema salarial del empleado
+- `SEXO`: Texto, sexo del empleado (F o M)
+- `ENTIDAD`: Texto, asociación a la que pertenece el empleado
+- `CATEGORIA`: Texto, categoría del puesto del empleado
+- `ESQUEMA SALARIAL`: Texto, esquema salarial del empleado (PLUSES o UNICO)
 
 ### Datos de Funcionarios (`funcionarios_uq.xls`)
 
@@ -70,12 +70,12 @@ El archivo `funcionarios_uq.xls` debe contener las siguientes columnas:
 - `FECHA DE NACIMIENTO`: Fecha, fecha de nacimiento del empleado
 - `EDAD`: Numérico, edad del empleado
 - `FECHA DE INGRESO`: Fecha, fecha de ingreso del empleado
-- `ANTIGUEDAD`: Numérico, antigüedad del empleado en meses
-- `SEXO`: Texto, sexo del empleado (por ejemplo, "F" o "M")
+- `ANTIGUEDAD`: Numérico, antigüedad del empleado
+- `SEXO`: Texto, sexo del empleado (F o M)
 - `SALARIO`: Numérico, salario del empleado
-- `ENTIDAD`: Texto, entidad a la que pertenece el empleado
-- `MONTO GIRADO`: Numérico, monto girado al empleado
-- `CATEGORIA`: Texto, categoría del empleado
-- `ESQUEMA SALARIAL`: Texto, esquema salarial del empleado
+- `ENTIDAD`: Texto, asociación a la que pertenece el empleado
+- `MONTO GIRADO`: Numérico, monto girado del empleado a la asociación
+- `CATEGORIA`: Texto, categoría del puesto del empleado
+- `ESQUEMA SALARIAL`: Texto, esquema salarial del empleado (PLUSES o UNICO)
 
 2. Ejecuta el script principal `R/main.R` para calcular el valor actuarial de la cesantía.

@@ -59,5 +59,7 @@ valor_actuarial <- calcular_cesantia(poblacion=poblacion_activa, probs=tabla_pro
 resultado <- poblacion_activa |>
   mutate(valor_actuarial = rowSums(valor_actuarial))
 
+message(paste("El valor actuarial total es:", sum(valor_actuarial)), " CRC")
+
 openxlsx::write.xlsx(resultado, "results/resultado.xlsx")
 
