@@ -39,7 +39,7 @@ calcular_cesantia <- function(poblacion_activa, probs, umbral) {
     )
   )
   
-  montos_cesantia_mat <- pmin(salarios_mat * factores_antiguedad, 4360413)
+  montos_cesantia_mat <- pmin(salarios_mat * factores_antiguedad, 3302076) # salario de gerente de área
   
   montos_girados_mat <- 0.07 * salarios_mat # sumar aporte de patrono (4% obrero + 3% patrono)
   montos_girados_mat[is.na(poblacion_activa$entidad),] <- 0

@@ -50,3 +50,4 @@ factor_crecimiento_salarial <- function(modelo_escala, antiguedad_i, antiguedad_
 
 # Ejecución principal
 modelo_escala <- .estimar_escala(poblacion_activa, salario_base=535650)
+write_rds(modelo_escala, "data/processed/escala_salarial.RDS")

@@ -3,38 +3,69 @@ title: "Metodología de la valuación actuarial del beneficio de cesantía de la
 author: "José Andrés Piedra Molina"
 date: "`r Sys.Date()`"
 output: pdf_document
+editor_options: 
+  markdown: 
+    wrap: sentence
 ---
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = FALSE)
-source('probs.R')
-source('cesantia.R')
+library(knitr)
+library(readxl)
+library(tidyverse)
 ```
 
-El beneficio de cesantía está amparado por la Constitución Política de Costa Rica, artículo 63, el Código de Trabajo y sus reformas, artículos 28, 29 y 30, así como la Ley 7983, artículo 88. Sirve resumir sus características principales en **eligibilidad**: Las personas trabajadoras tienen derecho a ser indemnizadas en caso de terminación de la relación laboral con responsabilidad patronal y **cuantía**: El monto del beneficio se calcula como el promedio del salario mensual del último año, multiplicado por el menor de 8 y el número de años trabajados y por una cantidad de días en función de la antigüedad, según la siguiente tabla:
+El beneficio de cesantía está amparado por la Constitución Política de Costa Rica, artículo 63, el Código de Trabajo y sus reformas, artículos 28, 29 y 30, así como la Ley 7983, artículo 88.
+Sirve resumir sus características principales en **elegibilidad**: Las personas trabajadoras tienen derecho a ser indemnizadas en caso de terminación de la relación laboral con responsabilidad patronal y **cuantía**: El monto del beneficio se calcula como el promedio del salario mensual del último año, multiplicado por el menor de 8 y el número de años trabajados y por una cantidad de días en función de la antigüedad, según la siguiente tabla:
 
 ```{r}
-data.frame(
-  Antigüedad = c(1/4, 1/2, 1:6, 10:13, Inf),
-  Días = c(seq(0, 14, 7), seq(19.5, 21.5, 0.5), seq(22, 20, -0.5))
-) -> tabla
-knitr::kable(tabla,
-             caption = "Momentos de cambio del número de días de salario reconocidos para el pago de la cesantía en función de la antigüedad, en años."
+tabla_dias_pagados_por_antiguedad <- read_xlsx(
+  "data/raw/dias_pagados_cesantia.xlsx"
+)
+
+kable(tabla_dias_pagados_por_antiguedad,
+      caption = "Días pagados.",
+      col.names = c(
+        "[mínimo",
+        "máximo)",
+        "Días pagados"
+      ),
+      digits = 1
 )
 ```
 
-  La metodología de la valuación actuarial del beneficio de cesantía para la población activa de la Contraloría General de la República se divide en una parte demográfica y una parte financiera. Para la primera, se configura un modelo de decremento único con los siguientes estados: activo, cese, renuncia, despido con causa y pensión. Se reconstruye la población a lo largo de los últimos 10 años y se estiman las probabilidades de acabar en cada estado en función de la antigüedad con el estimador no-paramétrico de Aalen-Johansen.
+La metodología de la valuación actuarial del beneficio de cesantía para la población activa de la Contraloría General de la República se divide en una parte demográfica y una parte financiera.
+Para la primera, se configura un modelo de decremento único con los siguientes estados: activo (0), cese (1), renuncia (2), despido con causa (3) y pensión (4).
+Se reconstruye la población desde el 2004 hasta la fecha de corte y se modelan las probabilidades de acabar en cada estado en función de la antigüedad (meses) con el estimador no-paramétrico de Aalen-Johansen.
+La probabilidad de encontrarse en el estado $n$ en el tiempo $t$ partiendo del estado $m$ en el tiempo $s$ está dada por $$p^{mn}(s,t) = \prod_{k=1}^K (I^{mn} + \Delta A^{mn}(t_k))$$
+donde el producto se toma sobre todos los tiempos $t_k$ donde se observa una salida.
+Si $m\neq n$, $I^{mn} = 0$ y $\Delta A(t_k)^{mn}=\dfrac{\Delta N^{mn}(t_k)}{Y^{m}(t_k)}$, donde $\Delta N^{mn}(t_k)$ es el número de salidas observadas del estado $m$ al estado $n$ en $t_k$ y $Y^{m}(t_k)$ es el número de individuos en el estado $m$ antes de $t_k$.
+Si $m=n$, entonces $I^{mn}=1$ y se toma $\Delta A(t_k)^{mn} = \dfrac{-\Delta N^n(t_k)}{Y^n{(t_k)}}$ donde $\Delta N^n(t_k)$ es el número de salidas del estado $n$ por cualquier causa en $t_k$.
+En esta configuración del modelo de múltiples decrementos asumimos que todas las causas de salida son absorbentes. Es decir, un individuo no puede regresar a ser activo si ha salido en algún momento por cualquier causa.
 
-  Por otra parte, se ajusta una escala salarial en función de la antigüedad para contemplar los incrementos salariales durante los años de proyección.
+Por otra parte, se ajusta una escala salarial en función de la antigüedad para contemplar los ascensos durante los años de proyección.
+Para ello se modela la mediana del salario en función de la antiguedad (meses):
+$$\text{Med}(S_t) = \beta_0 + \beta_1\,t + \epsilon$$
+donde forzamos $\beta_0=535650$ (salario de Auxiliar de Fiscalizador)
+
 ```{r}
-colnames(escala) <- c("Antigüedad", "Factor")
-knitr::kable(escala,
-             caption = "Factor de crecimiento salarial medio en función de la antigüedad para la población activa de la Contraloría General de la República."
-)
+escala_salarial <- read_rds("data/processed/escala_salarial.RDS")
+escala_salarial
 ```
-  Además, se asume que la condición de estar asociado es invariante y determinada por su condición actual. Asimismo, se asume que las salidas por cualquier causa ocurren uniformemente a lo largo del año, de modo que ocurren, en promedio, a mitad de año.
-  Para incorporar el valor del dinero en el tiempo se ajusta la Curva de Rendimiento Soberana del Banco Central de Costa Rica a la curva $\delta$ de Nelson-Siegel. Se halla un mínimo de la pérdida cuadrática con los siguientes parámetros:
-$$\beta_0 = 0.03041801;\ \beta_1 = 0.02052216;\ \beta_2 =0.06247651;\ \eta_0 = 3.46325724.$$
 
-Basado en lo anterior, el valor actuarial del beneficio de cesantía del $j$-ésimo individuo se puede describir mediante $$\mathbb{E}[H_j^0] = \sum_{k=0}^{n_j-1}P(0, k+1/2)\ \max\{C^j_{k+1/2}-A^j_{k+1/2},\ 0\}\ \mathbb{P}[T_j\in[k,k+1)],$$ donde $n_j$ es el número de años restantes para que el individuo alcance los 65 años, $P(0,k) = \exp(-k\delta(k))$ es el precio de un bono cero-cupón con vencimiento en $k$, $C_k^j$ y $A_i^j$ son, respectivamente, el monto de la indemnización y el aporte total en el año $k$ y $T_j$ denota la variable aleatoria del tiempo residual hasta la salida por cesantía del $j$-ésimo individuo, en años.
-Finalmente, el valor actuarial total del beneficio de cesantía es $\mathbb{E}[H^0]=\sum_{j=1}^{N}\mathbb{E}[H_j^0]$, donde $N$ es el número de activos a la fecha de valoración (697 al 8 de septiembre de 2023.)
+Asimismo, se modela el factor de descuento asumiendo una inflación anual de 4,5% (punto medio de los extremos de la banda inflacionaria del Banco Central de Costa Rica):
+$$D(0,t) = \dfrac{1}{(1+4,5%)^(t/12)}$$
+
+Si un empleado pertenece a una asociación al momento de ser cesado,
+el monto que la persona haya girado a la misma se deduce del monto de la indemnización cubierto por la Contraloría.
+Se asumirá que la condición de estar asociado es invariante durante la proyección y determinada por el estado en la fecha de corte.
+
+La duración de la proyección es de 420 meses (35 años).
+Para efectos del valor actuarial, si una empleado alcanza los 65 años de edad durante la proyección,
+se asumirá que pasa a estar pensionado y el monto a pagar por cesantía a partir de entonces es 0.
+
+Basado en lo anterior, el valor actuarial del beneficio de cesantía del $j$-ésimo individuo se puede describir mediante
+$$\E[H_0^{(j)}]=\sum\limits_{k=1}^{n_j}D(0, k)(C^j_{k}-A^j_{k})^+Pr(T_j=k-1),$$
+$C_k^j$ y $A_k^j$ son, respectivamente, el monto de la indemnización y el aporte total en el mes $k$ del individuo $j$,
+$T_j$ denota la variable aleatoria del tiempo residual hasta la salida por cesantía del $j$-ésimo individuo, en meses.
+Finalmente, el valor actuarial total del beneficio de cesantía es $\mathbb{E}[H^0]=\sum_{j=1}^{N}\mathbb{E}[H_j^0]$, donde $N$ es el número de activos a la fecha de corte.
