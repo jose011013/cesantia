@@ -1,0 +1,40 @@
+---
+title: "Metodología de la valuación actuarial del beneficio de cesantía de la población activa de la Contraloría General de la República"
+author: "José Andrés Piedra Molina"
+date: "`r Sys.Date()`"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE)
+source('probs.R')
+source('cesantia.R')
+```
+
+El beneficio de cesantía está amparado por la Constitución Política de Costa Rica, artículo 63, el Código de Trabajo y sus reformas, artículos 28, 29 y 30, así como la Ley 7983, artículo 88. Sirve resumir sus características principales en **eligibilidad**: Las personas trabajadoras tienen derecho a ser indemnizadas en caso de terminación de la relación laboral con responsabilidad patronal y **cuantía**: El monto del beneficio se calcula como el promedio del salario mensual del último año, multiplicado por el menor de 8 y el número de años trabajados y por una cantidad de días en función de la antigüedad, según la siguiente tabla:
+
+```{r}
+data.frame(
+  Antigüedad = c(1/4, 1/2, 1:6, 10:13, Inf),
+  Días = c(seq(0, 14, 7), seq(19.5, 21.5, 0.5), seq(22, 20, -0.5))
+) -> tabla
+knitr::kable(tabla,
+             caption = "Momentos de cambio del número de días de salario reconocidos para el pago de la cesantía en función de la antigüedad, en años."
+)
+```
+
+  La metodología de la valuación actuarial del beneficio de cesantía para la población activa de la Contraloría General de la República se divide en una parte demográfica y una parte financiera. Para la primera, se configura un modelo de decremento único con los siguientes estados: activo, cese, renuncia, despido con causa y pensión. Se reconstruye la población a lo largo de los últimos 10 años y se estiman las probabilidades de acabar en cada estado en función de la antigüedad con el estimador no-paramétrico de Aalen-Johansen.
+
+  Por otra parte, se ajusta una escala salarial en función de la antigüedad para contemplar los incrementos salariales durante los años de proyección.
+```{r}
+colnames(escala) <- c("Antigüedad", "Factor")
+knitr::kable(escala,
+             caption = "Factor de crecimiento salarial medio en función de la antigüedad para la población activa de la Contraloría General de la República."
+)
+```
+  Además, se asume que la condición de estar asociado es invariante y determinada por su condición actual. Asimismo, se asume que las salidas por cualquier causa ocurren uniformemente a lo largo del año, de modo que ocurren, en promedio, a mitad de año.
+  Para incorporar el valor del dinero en el tiempo se ajusta la Curva de Rendimiento Soberana del Banco Central de Costa Rica a la curva $\delta$ de Nelson-Siegel. Se halla un mínimo de la pérdida cuadrática con los siguientes parámetros:
+$$\beta_0 = 0.03041801;\ \beta_1 = 0.02052216;\ \beta_2 =0.06247651;\ \eta_0 = 3.46325724.$$
+
+Basado en lo anterior, el valor actuarial del beneficio de cesantía del $j$-ésimo individuo se puede describir mediante $$\mathbb{E}[H_j^0] = \sum_{k=0}^{n_j-1}P(0, k+1/2)\ \max\{C^j_{k+1/2}-A^j_{k+1/2},\ 0\}\ \mathbb{P}[T_j\in[k,k+1)],$$ donde $n_j$ es el número de años restantes para que el individuo alcance los 65 años, $P(0,k) = \exp(-k\delta(k))$ es el precio de un bono cero-cupón con vencimiento en $k$, $C_k^j$ y $A_i^j$ son, respectivamente, el monto de la indemnización y el aporte total en el año $k$ y $T_j$ denota la variable aleatoria del tiempo residual hasta la salida por cesantía del $j$-ésimo individuo, en años.
+Finalmente, el valor actuarial total del beneficio de cesantía es $\mathbb{E}[H^0]=\sum_{j=1}^{N}\mathbb{E}[H_j^0]$, donde $N$ es el número de activos a la fecha de valoración (697 al 8 de septiembre de 2023.)
